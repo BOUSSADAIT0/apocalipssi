@@ -2,52 +2,78 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_pymongo import PyMongo
 from bson import ObjectId
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
 import PyPDF2
 from llm import summarize_text
-from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
 
-# Connexion MongoDB
+# Configurations MongoDB et JWT
 app.config["MONGO_URI"] = "mongodb://localhost:27017/apocalipssi"
+app.config["JWT_SECRET_KEY"] = "super_cle_secrete"  # Change-la pour la prod !
+
 mongo = PyMongo(app)
+jwt = JWTManager(app)
 
 # Collections
-utilisateurs = mongo.db.utilisateur
+utilisateurs = mongo.db.utilisateurs
 documents = mongo.db.documents
 results = mongo.db.results
 
 
-# ✅ Créer un utilisateur
-@app.route('/utilisateur', methods=['POST'])
-def create_user():
+# ✅ Création de compte
+@app.route('/signup', methods=['POST'])
+def signup():
     data = request.json
-    if not data.get('nom') or not data.get('email'):
-        return jsonify({"error": "Nom et email requis"}), 400
+    nom = data.get('nom')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not nom or not email or not password:
+        return jsonify({'error': 'Nom, email et mot de passe requis'}), 400
+
+    if utilisateurs.find_one({'email': email}):
+        return jsonify({'error': 'Email déjà utilisé'}), 400
+
+    hashed_password = generate_password_hash(password)
 
     user = {
-        "_id": str(ObjectId()),
-        "nom": data['nom'],
-        "email": data['email'],
-        "cle_api": str(ObjectId()),
-        "date_creation": datetime.utcnow()
+        'nom': nom,
+        'email': email,
+        'password': hashed_password,
+        'date_creation': datetime.utcnow()
     }
+
     utilisateurs.insert_one(user)
 
-    return jsonify({"message": "Utilisateur créé", "user_id": user["_id"]})
+    return jsonify({'message': 'Compte créé avec succès'}), 201
 
 
-# ✅ Upload de document PDF + Résultat
+# ✅ Connexion
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    user = utilisateurs.find_one({'email': email})
+
+    if not user or not check_password_hash(user['password'], password):
+        return jsonify({'error': 'Identifiants incorrects'}), 401
+
+    token = create_access_token(identity=str(user['_id']), expires_delta=timedelta(days=1))
+
+    return jsonify({'access_token': token}), 200
+
+
+# ✅ Upload PDF (protégé)
 @app.route('/upload', methods=['POST'])
+@jwt_required()
 def upload_pdf():
-    user_id = request.form.get('user_id') or "68629cfa68b12f7cee7ddaa8" #juste pour test, à remplacer par l'ID de l'utilisateur
-    if not user_id:
-        return jsonify({'error': 'user_id manquant'}), 400
-
-    user = utilisateurs.find_one({"_id": user_id})
-    if not user:
-        return jsonify({'error': 'Utilisateur introuvable'}), 404
+    current_user = get_jwt_identity()
 
     if 'file' not in request.files:
         return jsonify({'error': 'Aucun fichier envoyé'}), 400
@@ -69,7 +95,7 @@ def upload_pdf():
             "filename": file.filename,
             "upload_date": datetime.utcnow(),
             "status": "uploaded",
-            "user_id": user_id
+            "user_id": current_user
         }
         doc_id = documents.insert_one(doc).inserted_id
 
@@ -79,7 +105,7 @@ def upload_pdf():
         # Enregistrement résultat
         res = {
             "document_id": str(doc_id),
-            "user_id": user_id,
+            "user_id": current_user,
             "summary": result.get("summary"),
             "points": result.get("points", []),
             "actions": result.get("actions", []),
@@ -97,10 +123,14 @@ def upload_pdf():
         return jsonify({'error': str(e)}), 500
 
 
-# ✅ Récupérer un résultat
+# ✅ Récupérer un résultat (protégé)
 @app.route('/result/<id>', methods=['GET'])
+@jwt_required()
 def get_result(id):
-    result = results.find_one({"_id": ObjectId(id)})
+    current_user = get_jwt_identity()
+
+    result = results.find_one({"_id": ObjectId(id), "user_id": current_user})
+
     if result:
         result['_id'] = str(result['_id'])
         result['document_id'] = str(result['document_id'])
@@ -110,10 +140,13 @@ def get_result(id):
         return jsonify({"error": "Résultat introuvable"}), 404
 
 
-# ✅ Récupérer les documents d’un utilisateur
-@app.route('/documents/<user_id>', methods=['GET'])
-def get_documents(user_id):
-    docs = documents.find({"user_id": user_id})
+# ✅ Liste des documents de l'utilisateur (protégé)
+@app.route('/documents', methods=['GET'])
+@jwt_required()
+def get_documents():
+    current_user = get_jwt_identity()
+
+    docs = documents.find({"user_id": current_user})
     doc_list = []
     for doc in docs:
         doc['_id'] = str(doc['_id'])

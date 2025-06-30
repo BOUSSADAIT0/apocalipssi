@@ -1,110 +1,88 @@
-# Assistant de Synthèse de Documents PDF
+# Apocalipssi
 
-Ce projet est une application web qui permet aux utilisateurs de télécharger un document PDF et d'obtenir un résumé concis généré par une intelligence artificielle. C'est une démonstration (POC - Proof of Concept) d'une solution d'automatisation pour la veille réglementaire ou l'analyse rapide de documents.
+Application d'analyse intelligente de documents PDF (résumé, points clés, suggestions d'actions) avec Mixtral via Groq et une interface moderne React.
 
-## ✨ Fonctionnalités
+## Fonctionnalités
+- Upload de fichiers PDF
+- Résumé automatique en français
+- Extraction des points clés
+- Suggestions d'actions concrètes
+- Interface web moderne et responsive
 
-- **Interface web simple** : Une page web au design moderne pour interagir avec l'application.
-- **Upload de PDF** : Zone de dépôt de fichiers intuitive pour sélectionner un document.
-- **Extraction de texte** : Le backend lit automatiquement le contenu du PDF.
-- **Résumé par IA** : Utilise l'API de Hugging Face pour générer un résumé pertinent.
-- **Affichage dynamique** : Le résumé apparaît sur la page sans avoir besoin de la recharger.
+## Prérequis
+- Python 3.8+
+- Node.js 14+
+- Un compte Groq (pour obtenir une clé API)
 
-## 🛠️ Technologies utilisées
+## Installation
 
-| Catégorie | Technologie | Description |
-|-----------|-------------|-------------|
-| **Frontend**| React       | Pour construire l'interface utilisateur interactive. |
-| **Backend** | Python      | Langage principal pour la logique serveur. |
-|             | Flask       | Micro-framework web pour créer l'API. |
-| **IA**      | Hugging Face| Fournit le modèle de langage pour la synthèse. |
-| **PDF**     | PyPDF2      | Bibliothèque Python pour extraire le texte des PDF. |
-
-## 📂 Structure du projet
-
-```
-apocalips/
-├── backend/
-│   ├── app.py             # Le serveur Flask principal
-│   ├── llm.py             # Logique pour appeler l'IA
-│   ├── requirements.txt   # Dépendances Python
-│   └── .env               # Fichier pour les clés d'API (à créer)
-│
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── App.js         # Composant React principal
-│   │   ├── App.css        # Styles de l'application
-│   │   └── index.js       # Point d'entrée React
-│   └── package.json       # Dépendances JavaScript
-│
-└── README.md              # Ce fichier
-```
-
----
-
-## 🚀 Installation et Lancement
-
-Suivez ces étapes pour lancer l'application sur votre machine.
-
-### Prérequis
-
-- **Python** (version 3.8 ou plus) et son gestionnaire de paquets `pip`.
-- **Node.js** (version 14 ou plus) et son gestionnaire de paquets `npm`.
-
-### 1. Configuration du Backend
-
-Ouvrez un **premier terminal** et suivez ces instructions :
-
+### 1. Clonez le dépôt
 ```bash
-# 1. Allez dans le dossier du backend
+git clone https://github.com/BOUSSADAIT0/apocalipssi.git
+cd apocalipssi
+```
+
+### 2. Backend (API Flask)
+```bash
 cd backend
-
-# 2. Installez les dépendances Python
+python -m venv venv
+source venv/bin/activate  # ou venv\Scripts\activate sous Windows
 pip install -r requirements.txt
+```
 
-# 3. Créez votre fichier de configuration pour l'API
-#    Créez un fichier nommé EXACTEMENT ".env" à la racine du dossier "backend"
-#    et mettez-y votre token Hugging Face comme ceci :
-#
-#    HUGGINGFACE_API_TOKEN="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-#
+#### Configuration de la clé API Groq
+Créez un fichier `.env` dans le dossier `backend` :
+```
+GROQ_API_KEY="votre_cle_groq_ici"
+```
+et cree la cle api depuis le site https://console.groq.com/keys
 
-# 4. Lancez le serveur backend
+**Ne partagez jamais cette clé publiquement.**
+
+### 3. Frontend (React)
+```bash
+cd ../frontend
+npm install
+```
+
+## Lancement
+
+### 1. Démarrer le backend
+```bash
+cd backend
 python app.py
 ```
-Le serveur backend devrait maintenant tourner sur `http://127.0.0.1:5000`. Laissez ce terminal ouvert.
+Le serveur écoute sur http://localhost:5000
 
-### 2. Configuration du Frontend
-
-Ouvrez un **deuxième terminal** (ne fermez pas le premier !).
-
+### 2. Démarrer le frontend
 ```bash
-# 1. Allez dans le dossier du frontend
 cd frontend
-
-# 2. Installez les dépendances JavaScript (peut prendre une minute)
-npm install
-
-# 3. Lancez l'application React
 npm start
 ```
-Votre navigateur devrait s'ouvrir automatiquement sur `http://localhost:3000`. Si ce n'est pas le cas, ouvrez-le manuellement.
+L'application s'ouvre sur http://localhost:3000
 
-## 💡 Comment utiliser l'application
+## Utilisation
+- Cliquez sur "Sélectionner un fichier PDF" et choisissez un document.
+- Attendez l'analyse (quelques secondes).
+- Le résumé, les points clés et les suggestions d'actions s'affichent dans des boîtes séparées.
 
-1.  Assurez-vous que les serveurs backend et frontend sont bien lancés.
-2.  Rendez-vous sur `http://localhost:3000` dans votre navigateur.
-3.  Cliquez sur la zone "Cliquez ici pour choisir un fichier" et sélectionnez un document PDF.
-4.  Cliquez sur le bouton "Générer le résumé".
-5.  Patientez quelques instants. Le résumé apparaîtra dans la section "Résumé du document".
+## Structure des résultats
+La réponse du backend est un objet JSON :
+```json
+{
+  "summary": "...",
+  "key_points": ["...", "..."],
+  "action_items": ["...", "..."]
+}
+```
 
----
+## Sécurité
+- **Ne mettez jamais votre clé API Groq dans le code source public.**
+- Le fichier `.env` est ignoré par git.
 
-## 🔮 Améliorations possibles
+## Personnalisation
+- Le prompt système peut être adapté dans `backend/llm.py` pour changer le style ou la structure des résultats.
+- Le style de l'interface peut être modifié dans `frontend/src/App.css`.
 
-- **Gestion des erreurs plus fine** : Afficher des messages plus spécifiques (ex: "Le PDF est protégé par mot de passe").
-- **Points Clés et Actions** : Améliorer le "prompt" envoyé à l'IA pour qu'elle extraie non seulement un résumé, mais aussi des points importants et des actions suggérées.
-- **Gestion des gros fichiers** : Pour les PDF de plus de 1024 tokens, découper le texte et le traiter par morceaux.
-- **Barre de progression** : Montrer une barre de progression pendant l'analyse du document.
-- **Dockerisation** : Empaqueter l'application dans des conteneurs Docker pour un déploiement plus facile. 
+## Licence
+MIT 

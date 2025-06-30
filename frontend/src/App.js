@@ -1,7 +1,11 @@
 import React, { useState, useRef } from 'react';
-import './App.css'; // Importer le fichier CSS
+import './App.css';
+import Login from './Login';
+import Signup from './Signup';
 
 function App() {
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [showSignup, setShowSignup] = useState(false);
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState('');
   const [result, setResult] = useState(null);
@@ -28,32 +32,54 @@ function App() {
     setLoading(true);
     setError('');
     setResult(null);
+
     const formData = new FormData();
     formData.append('file', file);
 
     try {
       const res = await fetch('http://localhost:5000/upload', {
         method: 'POST',
-        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
       });
+
       const data = await res.json();
-      if (res.status !== 200 || data.error) {
-        setError(data.error || 'Une erreur est survenue.');
-        setResult(null);
+
+      if (!res.ok) {
+        setError(data.error || 'Erreur serveur.');
       } else {
         setResult(data);
       }
     } catch (err) {
-      setError("Erreur de connexion avec le serveur. Vérifiez qu'il est bien lancé.");
+      setError('Erreur de connexion au serveur.');
     }
     setLoading(false);
   };
+
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+  };
+
+  if (!token) {
+    return showSignup ? (
+      <Signup switchToLogin={() => setShowSignup(false)} />
+    ) : (
+      <Login
+        setToken={setToken}
+        switchToSignup={() => setShowSignup(true)}
+      />
+    );
+  }
 
   return (
     <div className="App">
       <div className="header">
         <h1>Assistant de Synthèse</h1>
-        <p>Uploadez un document PDF pour obtenir un résumé intelligent.</p>
+        <p>Uploadez un PDF pour générer un résumé intelligent.</p>
+        <button onClick={handleLogout} className="logout-button">Déconnexion</button>
       </div>
 
       <div className="upload-section" onClick={handleUploadClick}>
@@ -79,8 +105,8 @@ function App() {
         </button>
       )}
 
-      {loading && <div className="loading">Analyse en cours, veuillez patienter...</div>}
-      
+      {loading && <div className="loading">Analyse en cours...</div>}
+
       {error && <div className="error">{error}</div>}
 
       {result && (
@@ -93,4 +119,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

@@ -110,8 +110,8 @@ def upload_pdf():
             "document_id": str(doc_id),
             "user_id": current_user,
             "summary": result.get("summary"),
-            "points": result.get("points", []),
-            "actions": result.get("actions", []),
+            "points": result.get("key_points", []),
+            "actions": result.get("action_items", []),
             "generated_at": datetime.utcnow()
         }
         res_id = results.insert_one(res).inserted_id
@@ -119,7 +119,9 @@ def upload_pdf():
         return jsonify({
             "document_id": str(doc_id),
             "result_id": str(res_id),
-            "summary": result.get("summary")
+            "summary": result.get("summary"),
+            "points": result.get("key_points", []),
+            "actions": result.get("action_items", [])
         })
 
     except Exception as e:

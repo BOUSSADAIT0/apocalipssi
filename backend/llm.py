@@ -1,47 +1,87 @@
-import requests
 import os
+import groq
+import json
 from dotenv import load_dotenv
 
 # Charge les variables d'environnement depuis le fichier .env
 load_dotenv()
 
-API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-HF_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
+# Configure le client Groq
+# Assurez-vous d'avoir une variable GROQ_API_KEY dans votre fichier .env
+groq_api_key = os.environ.get("GROQ_API_KEY")
+if not groq_api_key:
+    raise ValueError("La clé d'API GROQ n'a pas été trouvée. "
+                     "Vérifiez votre fichier .env et la variable GROQ_API_KEY.")
 
-# Vérifie si le token a bien été chargé
-if not HF_TOKEN:
-    raise ValueError("Le token HUGGINGFACE_API_TOKEN n'a pas été trouvé. "
-                     "Vérifiez votre fichier .env ou vos variables d'environnement.")
+client = groq.Groq(api_key=groq_api_key)
 
-headers = {
-    "Authorization": f"Bearer {HF_TOKEN}"
-}
+def summarize_text(text: str):
+    """
+    Génère un résumé structuré, des points clés et des actions pour le texte donné
+    en utilisant le modèle Mixtral via l'API Groq.
+    """
+    # Limiter la taille du texte pour éviter l'erreur "Request Entity Too Large".
+    # Une troncature simple peut couper la fin du texte, mais garantit que l'API ne renverra pas d'erreur.
+    # ~28k caractères correspond à ~7k tokens, ce qui est généralement dans les limites des API.
+    MAX_TEXT_LENGTH = 28000
+    if len(text) > MAX_TEXT_LENGTH:
+        text = text[:MAX_TEXT_LENGTH]
 
-def summarize_text(text):
-    # Limite la taille du texte pour les modèles gratuits
-    # Une troncature simple peut couper des mots, mais c'est suffisant pour un POC.
-    if len(text) > 1024:
-        text = text[:1024]
+    # Prompt système pour guider la sortie du modèle
+    system_prompt = (
+        "Tu es un expert en analyse de texte. Ta tâche est de lire le texte fourni et de le transformer en une analyse structurée en français."
+        "Le format de sortie DOIT être un objet JSON valide avec exactement les clés suivantes :"
+        "  - \"summary\": Un résumé concis du texte."
+        "  - \"key_points\": Une liste (array) des points clés ou des idées les plus importantes du texte."
+        "  - \"action_items\": Une liste (array) d'actions concrètes ou de suggestions basées sur le contenu du texte. Si aucune action n'est pertinente, retourne une liste vide []."
+        "Ne réponds RIEN d'autre que l'objet JSON. Le JSON doit être complet et valide."
+    )
 
-    payload = {
-        "inputs": text,
-        "parameters": { # Ajout de paramètres pour un meilleur résumé
-            "min_length": 30,
-            "max_length": 150
-        }
-    }
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": text,
+                }
+            ],
+            model="compound-beta",
+            temperature=0.3,
+            max_tokens=2048,
+            response_format={"type": "json_object"},
+        )
 
-    response = requests.post(API_URL, headers=headers, json=payload)
+        response_content = chat_completion.choices[0].message.content
+        
+        # Nettoyage des balises Markdown si présentes
+        if response_content.strip().startswith('```json'):
+            response_content = response_content.strip()[7:]
+        if response_content.strip().startswith('```'):
+            response_content = response_content.strip()[3:]
+        if response_content.strip().endswith('```'):
+            response_content = response_content.strip()[:-3]
+        response_content = response_content.strip()
 
-    if response.status_code == 200:
-        summary_data = response.json()
+        # Analyse la réponse JSON du modèle
+        structured_summary = json.loads(response_content)
+
+        # Validation de base pour s'assurer que les clés attendues sont présentes
+        if not all(k in structured_summary for k in ['summary', 'key_points', 'action_items']):
+             return {"error": "La réponse du modèle n'a pas le format JSON attendu."}
+
+        return structured_summary
+
+    except json.JSONDecodeError:
         return {
-            "summary": summary_data[0]['summary_text'],
-            "points": [],  # Cette partie peut être développée
-            "actions": []  # Cette partie peut être développée
+            "error": "Erreur lors de l'analyse de la réponse JSON du modèle.",
+            "raw_response": response_content
         }
-    else:
-        # Retourne une erreur claire pour le débogage
+    except Exception as e:
+        # Capture les autres exceptions de l'appel API
         return {
-            "error": f"Erreur HuggingFace API : {response.status_code} - {response.text}"
+            "error": f"Erreur lors de l'appel à l'API Groq : {str(e)}"
         }

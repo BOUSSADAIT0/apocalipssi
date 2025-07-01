@@ -38,13 +38,16 @@ function App() {
         },
         body: formData
       });
+
       const data = await response.json();
+
       if (data.error) {
         setError(data.error);
       } else {
         setSummary(data.summary);
-        setKeyPoints(data.points || []);
-        setActionItems(data.actions || []);
+        // ✅ Gestion des deux noms possibles venant du backend
+        setKeyPoints(data.key_points || data.points || []);
+        setActionItems(data.action_items || data.actions || []);
       }
     } catch (err) {
       setError('Erreur lors de la connexion au serveur.');

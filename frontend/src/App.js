@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import './App.css'; // Importer le fichier CSS
+import './App.css';
+import Login from './Login';
+import Signup from './Signup';
 
 function App() {
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [showSignup, setShowSignup] = useState(false);
   const [summary, setSummary] = useState('');
   const [keyPoints, setKeyPoints] = useState([]);
   const [actionItems, setActionItems] = useState([]);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleFileUpload = async (event) => {
     setError('');
@@ -16,21 +20,31 @@ function App() {
     setLoading(true);
 
     const file = event.target.files[0];
+
+    if (!file) {
+      setError('Veuillez sélectionner un fichier PDF.');
+      setLoading(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
     try {
       const response = await fetch('http://localhost:5000/upload', {
         method: 'POST',
-        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
       });
       const data = await response.json();
       if (data.error) {
         setError(data.error);
       } else {
         setSummary(data.summary);
-        setKeyPoints(data.key_points);
-        setActionItems(data.action_items);
+        setKeyPoints(data.points || []);
+        setActionItems(data.actions || []);
       }
     } catch (err) {
       setError('Erreur lors de la connexion au serveur.');
@@ -38,12 +52,30 @@ function App() {
     setLoading(false);
   };
 
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+  };
+
+  if (!token) {
+    return showSignup ? (
+      <Signup switchToLogin={() => setShowSignup(false)} />
+    ) : (
+      <Login
+        setToken={setToken}
+        switchToSignup={() => setShowSignup(true)}
+      />
+    );
+  }
+
   return (
     <div className="App">
       <div className="header">
         <h1>📝 Analyse intelligente de document</h1>
         <p className="subtitle">Déposez un PDF pour obtenir un résumé, les points clés et des suggestions d'actions.</p>
+        <button onClick={handleLogout} className="logout-button">Déconnexion</button>
       </div>
+
       <div className="upload-container">
         <label htmlFor="file-upload" className="upload-label">
           <span role="img" aria-label="upload">📄</span> Sélectionner un fichier PDF
@@ -56,6 +88,7 @@ function App() {
           className="file-input"
         />
       </div>
+
       {loading && <p className="loading">⏳ Analyse en cours...</p>}
       {error && <div className="box error fade-in">{error}</div>}
 
@@ -91,4 +124,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

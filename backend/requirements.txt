@@ -6,3 +6,4 @@ python-dotenv
 pymongo
 Flask-JWT-Extended 
 Werkzeug
+groq 

@@ -90,6 +90,12 @@ def upload_pdf():
         if not text.strip():
             return jsonify({'error': 'PDF vide ou non lisible'}), 400
 
+        # Résumé via LLM
+        result = summarize_text(text)
+
+        if 'error' in result:
+            return jsonify(result), 400
+
         # Enregistrement document
         doc = {
             "filename": file.filename,
@@ -98,9 +104,6 @@ def upload_pdf():
             "user_id": current_user
         }
         doc_id = documents.insert_one(doc).inserted_id
-
-        # Résumé via LLM
-        result = summarize_text(text)
 
         # Enregistrement résultat
         res = {
@@ -120,7 +123,8 @@ def upload_pdf():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Une erreur inattendue est survenue: {e}")
+        return jsonify({'error': 'Une erreur serveur inattendue est survenue.'}), 500
 
 
 # ✅ Récupérer un résultat (protégé)

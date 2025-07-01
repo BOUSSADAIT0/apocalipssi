@@ -1,125 +1,126 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
 body {
-  background-color: #121212;
-  color: #e0e0e0;
-  font-family: 'Poppins', sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  background: #f4f6fb;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
   margin: 0;
-  padding: 20px;
+  padding: 0;
 }
 
 .App {
-  width: 100%;
-  max-width: 700px;
-  background-color: #1e1e1e;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+}
+
+.header {
   text-align: center;
-  border: 1px solid #333;
+  margin-bottom: 32px;
 }
 
-.header h1 {
-  font-size: 2.2rem;
-  margin-bottom: 10px;
-  color: #ffffff;
+.subtitle {
+  color: #6b7280;
+  font-size: 1.1em;
+  margin-top: 0.5em;
 }
 
-.header p {
-  color: #a0a0a0;
-  margin-bottom: 40px;
+.upload-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
 }
 
-.upload-section {
-  border: 2px dashed #444;
+.upload-label {
+  background: linear-gradient(90deg, #4f8cff 0%, #6ee7b7 100%);
+  color: #fff;
+  padding: 14px 32px;
   border-radius: 8px;
-  padding: 30px;
+  font-size: 1.1em;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-  margin-bottom: 20px;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(79,140,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.upload-label:hover {
+  background: linear-gradient(90deg, #2563eb 0%, #059669 100%);
 }
 
-.upload-section:hover {
-  background-color: #2a2a2a;
-  border-color: #007bff;
-}
-
-.upload-section input[type="file"] {
+.file-input {
   display: none;
 }
 
-.upload-icon {
-  font-size: 3rem;
-  color: #007bff;
+.loading {
+  text-align: center;
+  color: #2563eb;
+  font-weight: 500;
+  margin-bottom: 20px;
 }
 
-.upload-text {
-  margin-top: 15px;
-  font-weight: 600;
-  color: #c0c0c0;
+.box {
+  border-radius: 10px;
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  background: #f8f9fa;
+  animation: fadeIn 0.7s;
 }
 
-.analyze-button {
-  background: linear-gradient(90deg, #007bff, #0056b3);
-  color: white;
-  border: none;
-  padding: 15px 30px;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 10px;
-  transition: all 0.3s ease;
-  width: 100%;
+.box.summary {
+  border-left: 6px solid #4f8cff;
+  background: #eaf1ff;
+}
+.box.keypoints {
+  border-left: 6px solid #f59e42;
+  background: #fff7ea;
+}
+.box.actions {
+  border-left: 6px solid #10b981;
+  background: #eafff3;
 }
 
-.analyze-button:disabled {
-  background: #555;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.analyze-button:not(:disabled):hover {
-  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-.loading,
-.error {
-  margin-top: 30px;
-  font-size: 1.1rem;
-  padding: 15px;
-  border-radius: 8px;
-}
-
-.error {
-  color: #ff4d4d;
-  background-color: rgba(255, 77, 77, 0.1);
-}
-
-.results-section {
-  margin-top: 40px;
-  text-align: left;
-  background-color: #2a2a2a;
-  padding: 30px;
-  border-radius: 8px;
-}
-
-.results-section h3 {
-  border-bottom: 2px solid #007bff;
-  padding-bottom: 10px;
+.box h2 {
   margin-top: 0;
-  font-size: 1.5rem;
+  font-size: 1.3em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.results-section p {
-  line-height: 1.8;
-  color: #c0c0c0;
-  white-space: pre-wrap;
+.box.error {
+  background: #ffeaea;
+  border-color: #ffb3b3;
+  color: #b30000;
+  border-left: 6px solid #b30000;
+}
+
+.fade-in {
+  animation: fadeIn 0.7s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .App {
+    padding: 8px;
+    border-radius: 0;
+  }
+  .box {
+    padding: 14px;
+    margin: 14px 0;
+  }
+  .upload-label {
+    padding: 10px 16px;
+    font-size: 1em;
+  }
 }
 
 .login-page {

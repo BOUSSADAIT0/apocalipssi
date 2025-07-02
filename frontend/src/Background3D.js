@@ -9,7 +9,7 @@ function Background3D() {
       left: 0,
       width: '100vw',
       height: '100vh',
-      zIndex: -1,
+      zIndex: -2,
       background: 'linear-gradient(135deg, #23243a 0%, #3a2d5c 60%, #5e3c58 100%)',
       overflow: 'hidden',
     }}>

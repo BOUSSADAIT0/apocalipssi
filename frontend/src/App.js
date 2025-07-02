@@ -4,6 +4,7 @@ import Login from './Login';
 import Signup from './Signup';
 import Dashboard from './Dashboard';
 import Background3D from './Background3D';
+import Particles3DBackground from './Particles3DBackground';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -66,6 +67,7 @@ function App() {
   if (!token) {
     return (
       <>
+        <Particles3DBackground />
         <Background3D />
         {showSignup ? (
           <Signup switchToLogin={() => setShowSignup(false)} />
@@ -82,6 +84,7 @@ function App() {
   if (showDashboard) {
     return (
       <>
+        <Particles3DBackground />
         <Background3D />
         <Dashboard token={token} onBack={() => setShowDashboard(false)} />
       </>
@@ -90,6 +93,7 @@ function App() {
 
   return (
     <>
+      <Particles3DBackground />
       <Background3D />
       <div className="App">
         <div className="header">

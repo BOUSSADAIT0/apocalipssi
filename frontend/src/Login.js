@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Alert, CircularProgress, Link, Paper } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 function Login({ setToken, switchToSignup }) {
   const [email, setEmail] = useState('');
@@ -32,103 +30,49 @@ function Login({ setToken, switchToSignup }) {
   };
 
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      <Paper elevation={10} sx={{
-        p: 5,
-        maxWidth: 400,
-        width: '100%',
-        borderRadius: 4,
-        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-        backdropFilter: 'blur(4px)',
-        background: 'rgba(255,255,255,0.95)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <LockOutlinedIcon color="primary" sx={{ mr: 1 }} />
-          <Typography variant="h5" component="h2" fontWeight={700} color="primary.main">
-            Connexion
-          </Typography>
-        </Box>
-        <Typography variant="body2" color="text.secondary" align="center" mb={2}>
-          Bienvenue ! Connectez-vous pour accéder à votre espace personnel.
-        </Typography>
-        <Box component="form" onSubmit={handleLogin} sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
-          <TextField
-            label="Email"
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-            fullWidth
-            autoFocus
-            variant="outlined"
-            sx={{
-              background: 'rgba(255,255,255,0.8)',
-              borderRadius: 2,
-              boxShadow: '0 2px 8px rgba(30,60,114,0.07)',
-              transition: 'box-shadow 0.3s',
-              '&:hover': { boxShadow: '0 4px 16px rgba(30,60,114,0.13)' }
-            }}
-          />
-          <TextField
-            label="Mot de passe"
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            fullWidth
-            variant="outlined"
-            sx={{
-              background: 'rgba(255,255,255,0.8)',
-              borderRadius: 2,
-              boxShadow: '0 2px 8px rgba(30,60,114,0.07)',
-              transition: 'box-shadow 0.3s',
-              '&:hover': { boxShadow: '0 4px 16px rgba(30,60,114,0.13)' }
-            }}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={loading}
-            fullWidth
-            size="large"
-            sx={{
-              mt: 1,
-              borderRadius: 2,
-              fontWeight: 700,
-              boxShadow: '0 2px 8px rgba(30,60,114,0.13)',
-              textTransform: 'none',
-              fontSize: '1.1rem',
-              transition: 'background 0.3s',
-              background: 'linear-gradient(90deg, #1e3c72 0%, #2a5298 100%)',
-              '&:hover': {
-                background: 'linear-gradient(90deg, #2a5298 0%, #1e3c72 100%)',
-              },
-            }}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Se connecter'}
-          </Button>
-          {error && <Alert severity="error">{error}</Alert>}
-        </Box>
-        <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-          Pas encore de compte ?{' '}
-          <Link component="button" variant="body2" onClick={switchToSignup} sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-            Créer un compte
-          </Link>
-        </Typography>
-      </Paper>
-    </Box>
+    <div className="login-page">
+      <h2>Connexion</h2>
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            marginTop: 8,
+            borderRadius: 7,
+            border: 'none',
+            padding: '12px 0',
+            fontSize: '1.1em',
+            fontWeight: 600,
+            width: '100%',
+            background: 'linear-gradient(90deg, #ffb3c6 0%, #e0c3fc 50%, #b3c6f7 100%)',
+            color: '#23243a',
+            boxShadow: 'none',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            transition: 'background 0.2s',
+          }}
+          onMouseOver={e => e.currentTarget.style.background = 'linear-gradient(90deg, #e0c3fc 0%, #ffb3c6 100%)'}
+          onMouseOut={e => e.currentTarget.style.background = 'linear-gradient(90deg, #ffb3c6 0%, #e0c3fc 50%, #b3c6f7 100%)'}
+        >
+          {loading ? 'Connexion...' : 'Se connecter'}
+        </button>
+        {error && <div className="form-error">{error}</div>}
+      </form>
+      <p>Pas encore de compte ? <span className="link" onClick={switchToSignup}>Créer un compte</span></p>
+    </div>
   );
 }
 

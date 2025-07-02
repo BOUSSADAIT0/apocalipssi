@@ -7,15 +7,24 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import PyPDF2
 from llm import summarize_text
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 # Configurations MongoDB et JWT
-app.config["MONGO_URI"] = "mongodb://localhost:27017/apocalipssi"
-app.config["JWT_SECRET_KEY"] = "super_cle_secrete"  # Change-la pour la prod !
+app.config["MONGO_URI"] = os.environ.get("MONGO_URI", "mongodb://localhost:27017/apocalipssi")
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "super-secret-key")
 
 mongo = PyMongo(app)
+
+# Test de connexion à MongoDB
+try:
+    print("Collections MongoDB :", mongo.db.list_collection_names())
+    print("Connexion à MongoDB réussie !")
+except Exception as e:
+    print("Erreur de connexion à MongoDB :", e)
+
 jwt = JWTManager(app)
 
 # Collections
@@ -23,6 +32,25 @@ utilisateurs = mongo.db.utilisateurs
 documents = mongo.db.documents
 results = mongo.db.results
 
+# Forcer la création de la base et des collections 'users' et 'results' si elles n'existent pas
+if "users" not in mongo.db.list_collection_names():
+    mongo.db.users.insert_one({
+        "email": "test@apocalipssi.local",
+        "password": "dummy",
+        "created_for_init": True
+    })
+    print("Collection 'users' créée avec un document d'initialisation.")
+
+if "results" not in mongo.db.list_collection_names():
+    mongo.db.results.insert_one({
+        "user_id": "init",
+        "filename": "init.pdf",
+        "date": "init",
+        "summary": "init",
+        "key_points": [],
+        "action_items": []
+    })
+    print("Collection 'results' créée avec un document d'initialisation.")
 
 # ✅ Création de compte
 @app.route('/signup', methods=['POST'])
@@ -32,8 +60,8 @@ def signup():
     email = data.get('email')
     password = data.get('password')
 
-    if not nom or not email or not password:
-        return jsonify({'error': 'Nom, email et mot de passe requis'}), 400
+    if not email or not password:
+        return jsonify({'error': 'Email et mot de passe requis'}), 400
 
     if utilisateurs.find_one({'email': email}):
         return jsonify({'error': 'Email déjà utilisé'}), 400
@@ -41,15 +69,16 @@ def signup():
     hashed_password = generate_password_hash(password)
 
     user = {
-        'nom': nom,
         'email': email,
         'password': hashed_password,
         'date_creation': datetime.utcnow()
     }
+    if nom:
+        user['nom'] = nom
 
     utilisateurs.insert_one(user)
 
-    return jsonify({'message': 'Compte créé avec succès'}), 201
+    return jsonify({'success': True}), 201
 
 
 # ✅ Connexion
@@ -73,8 +102,6 @@ def login():
 @app.route('/upload', methods=['POST'])
 @jwt_required()
 def upload_pdf():
-    current_user = get_jwt_identity()
-
     if 'file' not in request.files:
         return jsonify({'error': 'Aucun fichier envoyé'}), 400
     file = request.files['file']
@@ -86,44 +113,28 @@ def upload_pdf():
         text = ""
         for page in reader.pages:
             text += page.extract_text() or ""
-
         if not text.strip():
             return jsonify({'error': 'PDF vide ou non lisible'}), 400
-
-        # Résumé via LLM
         result = summarize_text(text)
-
+        # Si le modèle a renvoyé une erreur, on l'affiche et on la transmet
         if 'error' in result:
+            print("--- Erreur retournée par le LLM ---")
+            print(result)
+            print("---------------------------------")
             return jsonify(result), 400
 
-        # Enregistrement document
-        doc = {
-            "filename": file.filename,
-            "upload_date": datetime.utcnow(),
-            "status": "uploaded",
-            "user_id": current_user
-        }
-        doc_id = documents.insert_one(doc).inserted_id
-
-        # Enregistrement résultat
-        res = {
-            "document_id": str(doc_id),
-            "user_id": current_user,
-            "summary": result.get("summary"),
-            "points": result.get("key_points", []),
-            "actions": result.get("action_items", []),
-            "generated_at": datetime.utcnow()
-        }
-        res_id = results.insert_one(res).inserted_id
-
-        return jsonify({
-            "document_id": str(doc_id),
-            "result_id": str(res_id),
-            "summary": result.get("summary"),
-            "points": result.get("key_points", []),
-            "actions": result.get("action_items", [])
+        # Stockage du résultat dans MongoDB
+        user_id = get_jwt_identity()
+        mongo.db.results.insert_one({
+            'user_id': user_id,
+            'filename': file.filename,
+            'date': datetime.utcnow(),
+            'summary': result.get('summary', ''),
+            'key_points': result.get('key_points', []),
+            'action_items': result.get('action_items', [])
         })
 
+        return jsonify(result)
     except Exception as e:
         print(f"Une erreur inattendue est survenue: {e}")
         return jsonify({'error': 'Une erreur serveur inattendue est survenue.'}), 500
@@ -158,6 +169,17 @@ def get_documents():
         doc['_id'] = str(doc['_id'])
         doc_list.append(doc)
     return jsonify(doc_list)
+
+
+@app.route('/history', methods=['GET'])
+@jwt_required()
+def get_history():
+    user_id = get_jwt_identity()
+    results = list(mongo.db.results.find({'user_id': user_id}).sort('date', -1))
+    for r in results:
+        r['_id'] = str(r['_id'])  # Pour la sérialisation JSON
+        r['date'] = r['date'].strftime('%Y-%m-%d %H:%M')
+    return jsonify(results)
 
 
 if __name__ == '__main__':

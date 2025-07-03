@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import './App.css';
 import Login from './Login';
 import Signup from './Signup';
+import Dashboard from './Dashboard';
+import Background3D from './Background3D';
+import Particles3DBackground from './Particles3DBackground';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [showSignup, setShowSignup] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   const [summary, setSummary] = useState('');
   const [keyPoints, setKeyPoints] = useState([]);
   const [actionItems, setActionItems] = useState([]);
@@ -61,69 +65,90 @@ function App() {
   };
 
   if (!token) {
-    return showSignup ? (
-      <Signup switchToLogin={() => setShowSignup(false)} />
-    ) : (
-      <Login
-        setToken={setToken}
-        switchToSignup={() => setShowSignup(true)}
-      />
+    return (
+      <>
+        <Particles3DBackground />
+        <Background3D />
+        {showSignup ? (
+          <Signup switchToLogin={() => setShowSignup(false)} />
+        ) : (
+          <Login
+            setToken={setToken}
+            switchToSignup={() => setShowSignup(true)}
+          />
+        )}
+      </>
+    );
+  }
+
+  if (showDashboard) {
+    return (
+      <>
+        <Particles3DBackground />
+        <Background3D />
+        <Dashboard token={token} onBack={() => setShowDashboard(false)} />
+      </>
     );
   }
 
   return (
-    <div className="App">
-      <div className="header">
-        <h1>📝 Analyse intelligente de document</h1>
-        <p className="subtitle">Déposez un PDF pour obtenir un résumé, les points clés et des suggestions d'actions.</p>
-        <button onClick={handleLogout} className="logout-button">Déconnexion</button>
+    <>
+      <Particles3DBackground />
+      <Background3D />
+      <div className="App">
+        <div className="header">
+          <h1>📝 Analyse intelligente de document</h1>
+          <p className="subtitle">Déposez un PDF pour obtenir un résumé, les points clés et des suggestions d'actions.</p>
+          <button onClick={handleLogout} className="logout-button">Déconnexion</button>
+          <button onClick={() => setShowDashboard(true)} className="dashboard-btn">Tableau de bord</button>
+        </div>
+
+        <div className="upload-container">
+          <label htmlFor="file-upload" className="upload-label">
+            <span role="img" aria-label="upload">📄</span> Sélectionner un fichier PDF
+          </label>
+          <input
+            id="file-upload"
+            type="file"
+            accept=".pdf"
+            onChange={handleFileUpload}
+            className="file-input"
+          />
+        </div>
+
+        {loading && <p className="loading">⏳ Analyse en cours...</p>}
+        {error && <div className="box error fade-in">{error}</div>}
+
+        {summary && (
+          <div className="box summary fade-in">
+            <h2>📰 Résumé</h2>
+            <p>{summary}</p>
+          </div>
+        )}
+
+        {keyPoints.length > 0 && (
+          <div className="box keypoints fade-in">
+            <h2>📌 Points clés</h2>
+            <ul>
+              {keyPoints.map((point, idx) => (
+                <li key={idx}>{point}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {actionItems.length > 0 && (
+          <div className="box actions fade-in">
+            <h2>✅ Suggestions d'actions</h2>
+            <ul>
+              {actionItems.map((action, idx) => (
+                <li key={idx}>{action}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
-
-      <div className="upload-container">
-        <label htmlFor="file-upload" className="upload-label">
-          <span role="img" aria-label="upload">📄</span> Sélectionner un fichier PDF
-        </label>
-        <input
-          id="file-upload"
-          type="file"
-          accept=".pdf"
-          onChange={handleFileUpload}
-          className="file-input"
-        />
-      </div>
-
-      {loading && <p className="loading">⏳ Analyse en cours...</p>}
-      {error && <div className="box error fade-in">{error}</div>}
-
-      {summary && (
-        <div className="box summary fade-in">
-          <h2>📰 Résumé</h2>
-          <p>{summary}</p>
-        </div>
-      )}
-
-      {keyPoints.length > 0 && (
-        <div className="box keypoints fade-in">
-          <h2>📌 Points clés</h2>
-          <ul>
-            {keyPoints.map((point, idx) => (
-              <li key={idx}>{point}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {actionItems.length > 0 && (
-        <div className="box actions fade-in">
-          <h2>✅ Suggestions d'actions</h2>
-          <ul>
-            {actionItems.map((action, idx) => (
-              <li key={idx}>{action}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import logo from './assets/logocolor.png';
+
 
 function Signup({ switchToLogin }) {
   const [email, setEmail] = useState('');
@@ -40,7 +42,15 @@ function Signup({ switchToLogin }) {
   };
 
   return (
-    <div className="login-page">
+    <div className="page-wrapper">
+          <div className="login-container">
+          <div className="login-page">
+            <img src={logo} alt="Logo" style={{ width: 80, marginBottom: 10, borderRadius: 20 }} />
+      
+            <h2 style={{ marginBottom: 4 }}>ComplySummarize IA</h2>
+            <p style={{ fontStyle: 'italic', color: '#555', marginBottom: 20 }}>
+              Votre assistant intelligent de synthèse de documents
+            </p>
       <h2>Créer un compte</h2>
       <form onSubmit={handleSignup}>
         <input
@@ -59,24 +69,7 @@ function Signup({ switchToLogin }) {
         />
         <button
           type="submit"
-          disabled={loading}
-          style={{
-            marginTop: 8,
-            borderRadius: 7,
-            border: 'none',
-            padding: '12px 0',
-            fontSize: '1.1em',
-            fontWeight: 600,
-            width: '100%',
-            background: 'linear-gradient(90deg, #ffb3c6 0%, #e0c3fc 50%, #b3c6f7 100%)',
-            color: '#23243a',
-            boxShadow: 'none',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            transition: 'background 0.2s',
-          }}
-          onMouseOver={e => e.currentTarget.style.background = 'linear-gradient(90deg, #e0c3fc 0%, #ffb3c6 100%)'}
-          onMouseOut={e => e.currentTarget.style.background = 'linear-gradient(90deg, #ffb3c6 0%, #e0c3fc 50%, #b3c6f7 100%)'}
-        >
+          disabled={loading}  >
           {loading ? 'Création...' : 'Créer le compte'}
         </button>
         {error && <div className="form-error">{error}</div>}
@@ -84,6 +77,8 @@ function Signup({ switchToLogin }) {
       </form>
       <p>Déjà un compte ? <span className="link" onClick={switchToLogin}>Se connecter</span></p>
     </div>
+          </div>
+        </div>
   );
 }
 

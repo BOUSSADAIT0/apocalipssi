@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import './App.css';
-import Login from './Login';
+import Particles3DBackground from './Particles3DBackground';
+import Background3D from './Background3D';
+import Sidebar from './Sidebar';
+import Login from './Login'; 
+import logo from './assets/logowhite.png';
 import Signup from './Signup';
 import Dashboard from './Dashboard';
-import Background3D from './Background3D';
-import Particles3DBackground from './Particles3DBackground';
+import uploadIcon from './assets/image.png';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -95,58 +98,34 @@ function App() {
     <>
       <Particles3DBackground />
       <Background3D />
-      <div className="App">
-        <div className="header">
-          <h1>📝 Analyse intelligente de document</h1>
-          <p className="subtitle">Déposez un PDF pour obtenir un résumé, les points clés et des suggestions d'actions.</p>
-          <button onClick={handleLogout} className="logout-button">Déconnexion</button>
-          <button onClick={() => setShowDashboard(true)} className="dashboard-btn">Tableau de bord</button>
-        </div>
+      <div className="container">
+        <Sidebar onLogout={handleLogout} />
+        <main className="main">
+          <img src={logo} alt="Logo" style={{ width: 150, marginBottom: 10 }} />
+          <h1 className="title">ComplySummarize IA</h1>
+          <p className="subtitle">Votre assistant intelligent de synthèse de documents</p>
 
-        <div className="upload-container">
-          <label htmlFor="file-upload" className="upload-label">
-            <span role="img" aria-label="upload">📄</span> Sélectionner un fichier PDF
-          </label>
-          <input
-            id="file-upload"
-            type="file"
-            accept=".pdf"
-            onChange={handleFileUpload}
-            className="file-input"
-          />
-        </div>
+          <div className="upload-box">
+            <label htmlFor="file-upload" className="drop-area">
+              <div className="upload-content">
+                <img src={uploadIcon} alt="Icône upload" className="upload-icon" />
+                <span>Déposez votre image ici, ou <span className="file-link">parcourez vos fichiers</span></span>
+              </div>
+              <input
+                id="file-upload"
+                type="file"
+                accept=".jpg,.jpeg,.png"
+                onChange={handleFileUpload}
+                className="file-input"
+              />
+            </label>
 
-        {loading && <p className="loading">⏳ Analyse en cours...</p>}
-        {error && <div className="box error fade-in">{error}</div>}
+            <button className="submit-btn" onClick={() => console.log("Soumettre")}>Résumé</button>
 
-        {summary && (
-          <div className="box summary fade-in">
-            <h2>📰 Résumé</h2>
-            <p>{summary}</p>
+            {loading && <p className="loading">⏳ Analyse en cours...</p>}
+            {error && <div className="error-msg">{error}</div>}
           </div>
-        )}
-
-        {keyPoints.length > 0 && (
-          <div className="box keypoints fade-in">
-            <h2>📌 Points clés</h2>
-            <ul>
-              {keyPoints.map((point, idx) => (
-                <li key={idx}>{point}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {actionItems.length > 0 && (
-          <div className="box actions fade-in">
-            <h2>✅ Suggestions d'actions</h2>
-            <ul>
-              {actionItems.map((action, idx) => (
-                <li key={idx}>{action}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+        </main>
       </div>
     </>
   );

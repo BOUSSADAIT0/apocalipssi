@@ -68,6 +68,7 @@ pip install -r requirements.txt
 #    et mettez-y votre token Hugging Face comme ceci :
 #
 #    HUGGINGFACE_API_TOKEN="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#    GROQ_API_KEY="gsk_*******************************************"
 #
 
 # 4. Lancez le serveur backend
